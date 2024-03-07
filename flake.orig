@@ -1,0 +1,91 @@
+{
+  description = "Rust Template";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    esp32 = {
+      url = "github:knarkzel/esp32";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs =
+    { nixpkgs
+    , flake-utils
+    , rust-overlay
+    , esp32
+    , ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        inherit (nixpkgs) lib;
+        inherit ((builtins.fromTOML (builtins.readFile ./Cargo.toml)).package) name;
+
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            (import rust-overlay)
+          ];
+        };
+
+        # toolchain =
+        #   (
+        #     pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml
+        #     );
+
+        rustPlatform =
+          let
+            pkgsCross = import nixpkgs {
+              inherit system;
+              crossSystem = {
+                inherit system;
+                rustc.config = "riscv32imc-unknown-none-elf";
+              };
+            };
+          in
+          pkgsCross.makeRustPlatform
+            {
+              # rustc = toolchain;
+              # cargo = toolchain;
+            };
+
+        nativeBuildInputs = with pkgs; [
+          # (rust-bin.nightly.latest.default.override {
+          # extensions = [ "rust-src" ];
+          # })
+          esp32.packages.${system}.esp32
+          # rustup
+          # espup
+          rust-analyzer
+          cargo-espflash
+          # toolchain
+        ];
+
+        buildInputs = with pkgs; [
+          rustup
+          cargo-generate
+          rust-analyzer
+          cargo-espflash
+          # toolchain
+        ];
+      in
+      {
+        devShells.default = pkgs.mkShell { inherit nativeBuildInputs buildInputs; };
+
+
+        packages.default = rustPlatform.buildRustPackage rec {
+          inherit name;
+          inherit buildInputs;
+          inherit nativeBuildInputs;
+          src = lib.cleanSource ./.;
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+
+        };
+      }
+    );
+}
