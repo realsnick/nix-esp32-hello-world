@@ -9,3 +9,19 @@ license = "MIT"
 hal             = { package = "esp32c3-hal", version = "0.15.0" }
 esp-backtrace   = { version = "0.11.0", features = ["esp32c3", "panic-handler", "exception-handler", "println"] }
 esp-println     = { version = "0.9.0", features = ["esp32c3"] }
+
+[dev-dependencies]
+addr2line = "0.21.0"
+allocator-api2 = "0.2.16"
+compiler_builtins = "0.1.108"
+dlmalloc = "0.2.6"
+fortanix-sgx-abi = "0.5.0"
+getopts = "0.2.21"
+hermit-abi = "0.3.9"
+libc = "0.2.153"
+memchr = "=2.5.0"
+object = "=0.32.2"
+r-efi-alloc = "1.0.0"
+rustc-demangle = "0.1.23"
+unwinding = "0.2.1"
+wasi = "=0.11.0"
